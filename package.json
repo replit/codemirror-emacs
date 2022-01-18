@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "vite ./dev",
     "test": "cm-runtests",
-    "build": "cm-buildhelper src/index.ts"
+    "build": "cm-buildhelper src/index.ts",
+    "publish": "npm run build && npm publish"
   },
   "keywords": [
     "editor",
