@@ -1,18 +1,9 @@
 import { BlockCursorPlugin, hideNativeSelection } from "./block-cursor"
-
-import { ChangeDesc, EditorSelection, Extension, MapMode } from "@codemirror/state"
-import { ViewPlugin, PluginValue, ViewUpdate } from "@codemirror/view"
-import { EditorView } from "@codemirror/view"
-
-import { showPanel } from "@codemirror/panel"
-import { StateField, StateEffect } from "@codemirror/state"
-
+import { StateField, StateEffect, ChangeDesc, EditorSelection, Extension, MapMode } from "@codemirror/state"
+import { showPanel, EditorView, ViewPlugin, PluginValue, ViewUpdate } from "@codemirror/view"
 import * as commands from "@codemirror/commands"
-import { toggleComment } from "@codemirror/comment"
-import * as history from "@codemirror/history"
-
-import {startCompletion} from "@codemirror/autocomplete"
-import {openSearchPanel} from "@codemirror/search"
+import { startCompletion } from "@codemirror/autocomplete"
+import { openSearchPanel } from "@codemirror/search"
 
 const emacsStyle = EditorView.theme({
   ".cm-emacsMode .cm-cursorLayer:not(.cm-vimCursorLayer)": {
@@ -284,7 +275,7 @@ class EmacsHandler {
 
     if (command === "insertstring" ||
       command === commands.splitLine ||
-      command === toggleComment) {
+      command === commands.toggleComment) {
       editor.pushEmacsMark();
     }
     if (typeof command === "string") {
@@ -469,10 +460,10 @@ export const emacsKeys: Record<string, any> = {
   "M-/": startCompletion,
   "C-u": "universalArgument",
 
-  "M-;": toggleComment,
+  "M-;": commands.toggleComment,
 
-  "C-/|C-x u|S-C--|C-z": history.undo,
-  "S-C-/|S-C-x u|C--|S-C-z": history.redo, // infinite undo?
+  "C-/|C-x u|S-C--|C-z": commands.undo,
+  "S-C-/|S-C-x u|C--|S-C-z": commands.redo, // infinite undo?
   // vertical editing
   "C-x r": "selectRectangularRegion",
   "M-x": { command: "focusCommandLine", args: "M-x " },
@@ -760,7 +751,7 @@ EmacsHandler.addCommands({
   yankRotate: function (handler: EmacsHandler) {
     if (handler.$data.lastCommand != "yank")
       return;
-    history.undo(handler.view);
+    commands.undo(handler.view);
     handler.$emacsMarkRing.pop(); // also undo recording mark
     handler.onPaste(killRing.rotate());
     handler.$data.lastCommand = "yank";
