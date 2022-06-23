@@ -1,5 +1,6 @@
-import { basicSetup, EditorState } from '@codemirror/basic-setup';
-import { EditorView, highlightActiveLine } from '@codemirror/view';
+import { basicSetup, EditorView } from 'codemirror';
+import { EditorState } from '@codemirror/state';
+import { highlightActiveLine } from '@codemirror/view';
 import { javascript } from '@codemirror/lang-javascript';
 import { xml } from '@codemirror/lang-xml';
 import { emacs } from "../src/"
@@ -8,8 +9,8 @@ import * as commands from "@codemirror/commands";
 (window as any)._commands = commands
 
 const doc = `
-import { basicSetup, EditorState } from '@codemirror/basic-setup';
-import { EditorView } from '@codemirror/view';
+import { basicSetup, EditorView } from 'codemirror';
+import { EditorState } from '@codemirror/state';
 import { javascript } from '@codemirror/lang-javascript';
 import { emacs } from "../src/"
 
