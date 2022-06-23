@@ -11,19 +11,16 @@
 
 ```js
 import { basicSetup, EditorView } from 'codemirror';
-import { EditorState } from '@codemirror/state';
 import { emacs } from "@replit/codemirror-emacs"
 
 new EditorView({
-    state: EditorState.create({
-      doc: "",
-      extensions: [
-        // make sure emacs is included before other keymaps
-        emacs(), 
-        // include the default keymap and all other keymaps you want to use in insert mode
-        basicSetup, 
-      ]
-    }),
-    parent: document.querySelector('#editor'),
+  doc: "",
+  extensions: [
+    // make sure emacs is included before other keymaps
+    emacs(), 
+    // include the default keymap and all other keymaps you want to use in insert mode
+    basicSetup, 
+  ],
+  parent: document.querySelector('#editor'),
 })
 ```

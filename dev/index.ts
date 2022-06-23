@@ -1,5 +1,4 @@
 import { basicSetup, EditorView } from 'codemirror';
-import { EditorState } from '@codemirror/state';
 import { highlightActiveLine } from '@codemirror/view';
 import { javascript } from '@codemirror/lang-javascript';
 import { xml } from '@codemirror/lang-xml';
@@ -10,7 +9,6 @@ import * as commands from "@codemirror/commands";
 
 const doc = `
 import { basicSetup, EditorView } from 'codemirror';
-import { EditorState } from '@codemirror/state';
 import { javascript } from '@codemirror/lang-javascript';
 import { emacs } from "../src/"
 
@@ -19,10 +17,8 @@ console.log('hi')
 \`
 
 new EditorView({
-  state: EditorState.create({
-    doc,
-    extensions: [emacs(), basicSetup, javascript()],
-  }),
+  doc,
+  extensions: [emacs(), basicSetup, javascript()],
   parent: document.querySelector('#editor'),
 });
 
@@ -46,16 +42,14 @@ let view
 function updateView() {
   if (view) view.destroy()
   view = (window as any)._view = new EditorView({
-    state: EditorState.create({
-      doc: htmlCheckbox.checked ? document.documentElement.outerHTML : doc,
-      extensions: [
-        emacs(), 
-        basicSetup, 
-        htmlCheckbox.checked ? xml(): javascript(), 
-        highlightActiveLine(),
-        wrapCheckbox.checked && EditorView.lineWrapping,
-      ].filter(Boolean),
-    }),
+    doc: htmlCheckbox.checked ? document.documentElement.outerHTML : doc,
+    extensions: [
+      emacs(),
+      basicSetup,
+      htmlCheckbox.checked ? xml(): javascript(),
+      highlightActiveLine(),
+      wrapCheckbox.checked && EditorView.lineWrapping,
+    ].filter(Boolean),
     parent: document.querySelector('#editor'),
   });
 }
