@@ -1,4 +1,4 @@
-import {EditorState, EditorView, basicSetup} from "@codemirror/basic-setup"
+import {EditorView, basicSetup} from "codemirror"
 import {xml} from "@codemirror/lang-xml"
 import {javascript} from "@codemirror/lang-javascript"
 import ist from "ist";
