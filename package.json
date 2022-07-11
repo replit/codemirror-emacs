@@ -1,12 +1,13 @@
 {
   "name": "@replit/codemirror-emacs",
-  "version": "6.0.0",
+  "version": "6.0.1",
   "description": "Emacs keybindings for CodeMirror 6",
   "scripts": {
     "dev": "vite ./dev",
     "test": "cm-runtests",
-    "build": "cm-buildhelper src/index.ts",
-    "publish": "npm run build && npm publish"
+    "build": "bin/build.js",
+    "publish": "npm run build && npm publish",
+    "prepare": "npm run build"
   },
   "keywords": [
     "editor",
@@ -23,18 +24,19 @@
   "sideEffects": false,
   "license": "MIT",
   "peerDependencies": {
-    "@codemirror/state": "^6.0.1",
-    "@codemirror/view": "^6.0.2",
-    "@codemirror/commands": "^6.0.0",
-    "@codemirror/autocomplete": "^6.0.2",
+    "@codemirror/state": "^6.1.0",
+    "@codemirror/view": "^6.0.3",
+    "@codemirror/commands": "^6.0.1",
+    "@codemirror/autocomplete": "^6.0.4",
     "@codemirror/search": "^6.0.0"
   },
   "devDependencies": {
-    "codemirror": "6.0.0",
+    "codemirror": "^6.0.1",
     "@codemirror/buildhelper": "^0.1.16",
-    "@codemirror/language": "^6.1.0",
-    "@codemirror/lang-javascript": "^6.0.0",
+    "@codemirror/language": "^6.2.0",
+    "@codemirror/lang-javascript": "^6.0.1",
     "@codemirror/lang-xml": "^6.0.0",
+    "@marijn/buildtool": "^0.1.2",
     "vite": "^2.3.8"
   },
   "repository": {
