@@ -127,7 +127,7 @@ function measureCursor(cm: any, view: EditorView, cursor: SelectionRange, primar
   var hCoeff = 1
 
   
-  let pos = view.coordsAtPos(head, cursor.assoc || 1)
+  let pos = view.coordsAtPos(head, 1)
   if (!pos) return null
   let base = getBase(view) 
   let letter = head < view.state.doc.length && view.state.sliceDoc(head, head + 1) 
