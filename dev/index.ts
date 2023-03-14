@@ -2,7 +2,7 @@ import { basicSetup, EditorView } from 'codemirror';
 import { highlightActiveLine } from '@codemirror/view';
 import { javascript } from '@codemirror/lang-javascript';
 import { xml } from '@codemirror/lang-xml';
-import { emacs } from "../src/"
+import { emacs } from "../src/index"
 
 import * as commands from "@codemirror/commands";
 (window as any)._commands = commands
