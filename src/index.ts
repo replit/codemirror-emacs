@@ -288,8 +288,9 @@ class EmacsHandler {
       if (!command) return undefined;
     }
 
-    if (!command.readOnly && !command.isYank)
+    if (!command.readOnly && !command.keepLastCommand) {
       data.lastCommand = null;
+    }
 
     var count = data.count || 1
     if (data.count) data.count = 0;
@@ -717,49 +718,59 @@ EmacsHandler.addCommands({
       view.dispatch(view.state.replaceSelection(""))
     },
   },
-  killLine: function (handler: EmacsHandler) {
-    handler.pushEmacsMark(null);
-    // don't delete the selection if it's before the cursor
-    handler.clearSelection();
-    commands.selectLineEnd(handler.view);
+  killLine: {
+    exec: function (handler: EmacsHandler) {
+      handler.pushEmacsMark(null);
+      // don't delete the selection if it's before the cursor
+      handler.clearSelection();
+      commands.selectLineEnd(handler.view);
 
-    var view = handler.view;
-    var state = view.state
-    
+      var view = handler.view;
+      var state = view.state
 
-    var text: string[] = [];
-    var changes = handler.view.state.selection.ranges.map(function(range) {
-      var from = range.from;
-      var to = range.to;
-      var line = state.sliceDoc(from, to)
-      text.push(line)
-      
-      // remove EOL if only whitespace remains after the cursor
-      if (/^\s*$/.test(line)) {
-        to += 1;
-        text.push("\n")
+
+      var text: string[] = [];
+      var changes = handler.view.state.selection.ranges.map(function(range) {
+        var from = range.from;
+        var to = range.to;
+        var line = state.sliceDoc(from, to)
+
+        // remove EOL if only whitespace remains after the cursor
+        if (/^\s*$/.test(line)) {
+          to += 1;
+          text.push("\n")
+        } else {
+          text.push(line)
+        }
+        return {from, to, insert: ""}
+      })
+      if (handler.$data.lastCommand == "killLine") {
+        killRing.append(text.join("\n"));
+      } else {
+        killRing.add(text.join("\n"));
       }
-      return {from, to, insert: ""}
-    })
-    
-    if (handler.$data.lastCommand == "killLine")
-      killRing.append(text.join("\n"));
-    else
-      killRing.add(text.join("\n"));
-
-    view.dispatch({changes});
+      handler.$data.lastCommand = "killLine";
+      view.dispatch({changes});
+    },
+    keepLastCommand: true
   },
-  yank: function (handler: EmacsHandler) {
-    handler.onPaste(killRing.get());
-    handler.$data.lastCommand = "yank";
+  yank: {
+    exec: function (handler: EmacsHandler) {
+      handler.onPaste(killRing.get());
+      handler.$data.lastCommand = "yank";
+    },
+    keepLastCommand: true
   },
-  yankRotate: function (handler: EmacsHandler) {
-    if (handler.$data.lastCommand != "yank")
-      return;
-    commands.undo(handler.view);
-    handler.$emacsMarkRing.pop(); // also undo recording mark
-    handler.onPaste(killRing.rotate());
-    handler.$data.lastCommand = "yank";
+  yankRotate: {
+    exec: function (handler: EmacsHandler) {
+      if (handler.$data.lastCommand != "yank")
+        return;
+      commands.undo(handler.view);
+      handler.$emacsMarkRing.pop(); // also undo recording mark
+      handler.onPaste(killRing.rotate());
+      handler.$data.lastCommand = "yank";
+    },
+    keepLastCommand: true
   },
   killRegion: {
     exec: function (handler: EmacsHandler) {
