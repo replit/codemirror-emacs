@@ -2,7 +2,7 @@ import { BlockCursorPlugin, hideNativeSelection } from "./block-cursor"
 import { StateField, StateEffect, ChangeDesc, EditorSelection, Extension, MapMode } from "@codemirror/state"
 import { showPanel, EditorView, ViewPlugin, PluginValue, ViewUpdate, keymap } from "@codemirror/view"
 import * as commands from "@codemirror/commands"
-import { startCompletion } from "@codemirror/autocomplete"
+import { startCompletion, completionStatus } from "@codemirror/autocomplete"
 import { openSearchPanel } from "@codemirror/search"
 
 const emacsStyle = EditorView.theme({
@@ -65,19 +65,14 @@ const emacsPlugin = ViewPlugin.fromClass(class implements PluginValue {
   }
 }, {
   eventHandlers: {
+    keydown: function (e: KeyboardEvent, view: EditorView) {
+      var result = this.em.handleKeyboard(e)
+      return !!result;
+    },
     mousedown: function() {
       this.em.$emacsMark = null
     }
   },
-  provide: plugin => {
-    return keymap.of([
-      {
-        any: function(view, e) {
-          return !!view.plugin(plugin)?.em.handleKeyboard(e)
-        }
-      }
-    ])
-  }
 })
 
 
@@ -197,6 +192,10 @@ class EmacsHandler {
   handleKeyboard(e: KeyboardEvent) {
     var keyData = EmacsHandler.getKey(e)
     var result = this.findCommand(keyData)
+
+    if (/Up|Down/.test(keyData?.[0]) && completionStatus(this.view.state))
+      return;
+
     if (result && result.command) {
       var commandResult = EmacsHandler.execCommand(result.command, this, result.args, result.count)
       if (commandResult === false)
