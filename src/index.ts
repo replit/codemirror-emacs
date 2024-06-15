@@ -22,7 +22,7 @@ const emacsStyle = EditorView.theme({
 }) 
 
 const emacsPlugin = ViewPlugin.fromClass(class implements PluginValue {
-   public view: EditorView;
+  public view: EditorView;
   public status = ""
   public em: EmacsHandler
   blockCursor: BlockCursorPlugin

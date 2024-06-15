@@ -3,10 +3,11 @@ import {xml} from "@codemirror/lang-xml"
 import {javascript} from "@codemirror/lang-javascript"
 import { indentUnit } from "@codemirror/language";
 import { keymap } from "@codemirror/view";
-import { emacs } from "../src/index"
+import { emacs } from ".."
 import { EditorState, EditorSelection } from "@codemirror/state";
 import {indentWithTab} from "@codemirror/commands";
 
+console.log("-----------------------------")
 
 describe("Emacs keybinding", () => {
     /**@type {HTMLDivElement}*/
@@ -86,6 +87,10 @@ describe("Emacs keybinding", () => {
         // without calling refresh cursor movement commands of codemirror 6 do not work
         view.measure()
         view.contentDOM.focus()
+
+        var plugins = view.plugins.filter(x=>x.value.em)
+        if (plugins.length != 1) throw new Error("Couldn't find emacs")
+        view.em = plugins[0].value.em;
     }
     function getSelectedText() {        
         var state = editor.state
@@ -126,8 +131,8 @@ describe("Emacs keybinding", () => {
 
     test("exchangePointAndMark with mark set", function() {
         initEditor('foo');
-        editor.pushEmacsMark({row: 0, column: 1});
-        editor.pushEmacsMark({row: 0, column: 2});
+        editor.em.pushEmacsMark({row: 0, column: 1});
+        editor.em.pushEmacsMark({row: 0, column: 2});
         typeKey('Ctrl-x', 'Ctrl-x');
         typeKey('Ctrl-x', 'Ctrl-x');
         typeKey('Ctrl-x', 'Ctrl-x');
