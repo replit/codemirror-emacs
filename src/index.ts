@@ -391,6 +391,10 @@ class EmacsHandler {
     })
     view.dispatch(specs)
   }
+  selectionToEmacsMark() {
+    var selection = this.view.state.selection;
+    return selection.ranges.map(x => x.head)
+  }
 }
 
 function pushUnique<T>(array: T[], item:T) {
@@ -624,6 +628,7 @@ EmacsHandler.addCommands({
       // in multi select mode, ea selection is handled individually
 
       if (args && args.count) {
+        var newMark = handler.selectionToEmacsMark();
         var mark = handler.popEmacsMark();
         if (mark) {
           var newRanges = mark.map((p: number)=> {
@@ -632,6 +637,7 @@ EmacsHandler.addCommands({
           view.dispatch({
             selection: EditorSelection.create(newRanges)
           })
+          handler.$emacsMarkRing.unshift(newMark);
         }
         return;
       }
@@ -680,7 +686,7 @@ EmacsHandler.addCommands({
       if (!lastMark) return;
 
       if (args.count) { // replace mark and point
-        markRing[markRing.length - 1] = selection.ranges.map(x => x.head)
+        markRing[markRing.length - 1] = handler.selectionToEmacsMark()
 
         handler.clearSelection();
         
@@ -730,22 +736,21 @@ EmacsHandler.addCommands({
       handler.pushEmacsMark(null);
       // don't delete the selection if it's before the cursor
       handler.clearSelection();
-      commands.selectLineEnd(handler.view);
-
       var view = handler.view;
       var state = view.state
 
-
       var text: string[] = [];
-      var changes = handler.view.state.selection.ranges.map(function(range) {
-        var from = range.from;
-        var to = range.to;
+      var changes = state.selection.ranges.map(function(range) {
+        var from = range.head;
+        var lineObject = state.doc.lineAt(from)
+
+        var to = lineObject.to;
         var line = state.sliceDoc(from, to)
 
         // remove EOL if only whitespace remains after the cursor
-        if (/^\s*$/.test(line)) {
+        if (/^\s*$/.test(line) && to < state.doc.length - 1) {
           to += 1;
-          text.push("\n")
+          text.push(line + "\n")
         } else {
           text.push(line)
         }

@@ -138,15 +138,15 @@ describe("Emacs keybinding", () => {
         eq('2>2', getSelections());
         typeKey('Ctrl-4', 'Ctrl-x', 'Ctrl-x');
         eq('3>3', getSelections());
-        debugger
 
-        typeKey('Ctrl-U', 'Ctrl-Space');
-        eq('3>3', getSelections());
-        typeKey('Ctrl-U', 'Ctrl-Space');
-        typeKey('Ctrl-U', 'Ctrl-Space');
+        typeKey('Ctrl-u', 'Ctrl-Space');
         eq('2>2', getSelections());
-        
-        //eq([{row: 0, column: 1}, {row: 0, column: 0}], editor.session.$emacsMarkRing, print(editor.session.$emacsMarkRing));
+        typeKey('Ctrl-u', 'Ctrl-Space');
+        eq('1>1', getSelections());
+        typeKey('Ctrl-u', 'Ctrl-Space');
+        eq('3>3', getSelections());
+        typeKey('Ctrl-u', 'Ctrl-Space');
+        eq('2>2', getSelections());
     });
 
     // test("exchangePointAndMark with selection", function() {
@@ -209,14 +209,14 @@ describe("Emacs keybinding", () => {
         typeKey('Ctrl-k');
         eq(getValue(),"fo\n  \n  123");
         typeKey('Ctrl-k');
-        // eq(getValue(),"fo\n  123");
-        // typeKey('Ctrl-k');
-        // eq(getValue(),"fo  123");
-        // typeKey('Ctrl-k');
-        // eq(getValue(),"fo");
-        // typeKey('Ctrl-k');
-        // typeKey('Ctrl-y');
-        // eq(getValue(),"foo  \n Hello world\n  \n  123");
+        eq(getValue(),"fo  \n  123");
+        typeKey('Ctrl-k');
+        eq(getValue(),"fo  123");
+        typeKey('Ctrl-k');
+        eq(getValue(),"fo");
+        typeKey('Ctrl-k');
+        typeKey('Ctrl-y');
+        eq(getValue(),"foo  \n Hello world\n  \n  123");
     });
 
 });
