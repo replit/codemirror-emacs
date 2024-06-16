@@ -171,6 +171,7 @@ class EmacsHandler {
   }
   static execCommand(command: any, handler: EmacsHandler, args: any, count: number = 1) {
     var commandResult = undefined;
+    if (count < 0) count = -count;
     if (typeof command === "function") {
       for (var i = 0; i < count; i++) command(handler.view);
     } else if (command === "null") {
@@ -334,9 +335,9 @@ class EmacsHandler {
   pushEmacsMark(p?: EmacsMark, activate?: boolean) {
     var prevMark = this.$emacsMark;
     if (prevMark)
-      this.$emacsMarkRing.push(prevMark);
+      pushUnique(this.$emacsMarkRing, prevMark);
     if (!p || activate) this.setEmacsMark(p);
-    else this.$emacsMarkRing.push(p);
+    else pushUnique(this.$emacsMarkRing, p);
   };
 
   popEmacsMark() {
@@ -390,6 +391,12 @@ class EmacsHandler {
     })
     view.dispatch(specs)
   }
+}
+
+function pushUnique<T>(array: T[], item:T) {
+  if (array.length && array[array.length - 1] + "" == item + "")
+    return;
+  array.push(item);
 }
 
 export const emacsKeys: Record<string, any> = {
@@ -630,7 +637,7 @@ EmacsHandler.addCommands({
       }
 
       var mark = handler.emacsMark();
-      var rangePositions = ranges.map(function (r) { return r.from; });
+      var rangePositions = ranges.map(function (r) { return r.head; });
       var transientMarkModeActive = true;
       var hasNoSelection = ranges.every(function (range) { return range.from == range.to; });
       // if transientMarkModeActive then mark behavior is a little
@@ -654,7 +661,7 @@ EmacsHandler.addCommands({
     handlesCount: true
   },
   exchangePointAndMark: {
-    exec: function exchangePointAndMark$exec(handler: EmacsHandler, args: any) {
+    exec: function(handler: EmacsHandler, args: any) {
       var view = handler.view;
       var selection = view.state.selection;
       var isEmpty = !selection.ranges.some(r => r.from != r.to)
@@ -673,6 +680,8 @@ EmacsHandler.addCommands({
       if (!lastMark) return;
 
       if (args.count) { // replace mark and point
+        markRing[markRing.length - 1] = selection.ranges.map(x => x.head)
+
         handler.clearSelection();
         
         var newRanges = lastMark.map(x => {
@@ -681,7 +690,6 @@ EmacsHandler.addCommands({
         view.dispatch({
           selection: EditorSelection.create(newRanges, selection.mainIndex)
         })
-
       } else { // create selection to last mark
         var n = Math.min(lastMark.length, selection.ranges.length)
         newRanges = []

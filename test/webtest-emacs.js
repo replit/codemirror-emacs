@@ -7,8 +7,6 @@ import { emacs } from ".."
 import { EditorState, EditorSelection } from "@codemirror/state";
 import {indentWithTab} from "@codemirror/commands";
 
-console.log("-----------------------------")
-
 describe("Emacs keybinding", () => {
     /**@type {HTMLDivElement}*/
     var root
@@ -130,15 +128,25 @@ describe("Emacs keybinding", () => {
     });
 
     test("exchangePointAndMark with mark set", function() {
-        initEditor('foo');
-        editor.em.pushEmacsMark({row: 0, column: 1});
-        editor.em.pushEmacsMark({row: 0, column: 2});
-        typeKey('Ctrl-x', 'Ctrl-x');
-        typeKey('Ctrl-x', 'Ctrl-x');
-        typeKey('Ctrl-x', 'Ctrl-x');
-        typeKey('Ctrl-x', 'Ctrl-x');
-        eq({row: 0, column: 2}, editor.getCursorPosition());
-        eq([{row: 0, column: 1}, {row: 0, column: 0}], editor.session.$emacsMarkRing, print(editor.session.$emacsMarkRing));
+        initEditor('foo bar');
+        setSelections([[1, 1]]);
+        typeKey('Ctrl-Space', 'Ctrl-Space');
+        setSelections([[2, 2]]);
+        typeKey('Ctrl-Space', 'Ctrl-Space');
+        setSelections([[3, 3]]);
+        typeKey('Ctrl-4', 'Ctrl-x', 'Ctrl-x');
+        eq('2>2', getSelections());
+        typeKey('Ctrl-4', 'Ctrl-x', 'Ctrl-x');
+        eq('3>3', getSelections());
+        debugger
+
+        typeKey('Ctrl-U', 'Ctrl-Space');
+        eq('3>3', getSelections());
+        typeKey('Ctrl-U', 'Ctrl-Space');
+        typeKey('Ctrl-U', 'Ctrl-Space');
+        eq('2>2', getSelections());
+        
+        //eq([{row: 0, column: 1}, {row: 0, column: 0}], editor.session.$emacsMarkRing, print(editor.session.$emacsMarkRing));
     });
 
     // test("exchangePointAndMark with selection", function() {
