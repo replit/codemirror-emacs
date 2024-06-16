@@ -149,55 +149,39 @@ describe("Emacs keybinding", () => {
         eq('2>2', getSelections());
     });
 
-    // test("exchangePointAndMark with selection", function() {
-    //     initEditor('foo');
-    //     editor.pushEmacsMark({row: 0, column: 1});
-    //     editor.pushEmacsMark({row: 0, column: 2});
-    //     sel.setRange(Range.fromPoints({row: 0, column: 0}, {row: 0, column: 1}), true);
-    //     editor.execCommand('exchangePointAndMark');
-    //     eq({row: 0, column: 1}, editor.getCursorPosition());
-    //     eq([{row: 0, column: 1}, {row: 0, column: 2}], editor.session.$emacsMarkRing, print(editor.session.$emacsMarkRing));
-    // });
+    test("exchangePointAndMark with selection", function() {
+        initEditor('foo');
+        setSelections([[1, 1]]);
+        typeKey('Ctrl-Space', 'Ctrl-Space');
+        setSelections([[2, 2]]);
+        typeKey('Ctrl-Space', 'Ctrl-Space');
+        
+        setSelections([[1, 0]]);
+        typeKey('Ctrl-x', 'Ctrl-x');
+        eq('0>1', getSelections());
+        typeKey('Ctrl-x', 'Ctrl-x');
+        eq('1>0', getSelections());
+    });
 
-    // test("exchangePointAndMark with multi selection", function() {
-    //     initEditor('foo\nhello world\n123');
-    //     var ranges = [[{row: 0, column: 0}, {row: 0, column: 3}],
-    //                   [{row: 1, column: 0}, {row: 1, column: 5}],
-    //                   [{row: 1, column: 6}, {row: 1, column: 11}]];
-    //     ranges.forEach(function(r) {
-    //         sel.addRange(Range.fromPoints(r[0], r[1]));
-    //     });
-    //     assert.equal("foo\nhello\nworld", editor.getSelectedText());
-    //     editor.execCommand('exchangePointAndMark');
-    //     assert.equal("foo\nhello\nworld", editor.getSelectedText());
-    //     eq(pluck(ranges, 0), pluck(sel.getAllRanges(), 'cursor'), "selections dir not inverted");
-    // });
+    test("exchangePointAndMark with multi selection", function() {
+        initEditor('foo\nhello world\n123');
+        setSelections([[0, 3], [4, 9], [18, 19]]);
+        eq("0>3,4>9,18>19", getSelections());
+        typeKey('Ctrl-x', 'Ctrl-x');
+        eq("3>0,9>4,19>18", getSelections());
+    });
 
-    // test("exchangePointAndMark with multi cursors", function() {
-    //     initEditor('foo\nhello world\n123');
-    //     var ranges = [[{row: 0, column: 0}, {row: 0, column: 3}],
-    //                   [{row: 1, column: 0}, {row: 1, column: 5}],
-    //                   [{row: 1, column: 6}, {row: 1, column: 11}]];
-    //     // move cursors to the start of each range and set a mark to its end
-    //     // without selecting anything
-    //     ranges.forEach(function(r) {
-    //         editor.pushEmacsMark(r[1]);
-    //         sel.addRange(Range.fromPoints(r[0], r[0]));
-    //     });
-    //     eq(pluck(ranges, 0), pluck(sel.getAllRanges(), 'cursor'), print(sel.getAllRanges()));
-    //     editor.execCommand('exchangePointAndMark');
-    //     eq(pluck(ranges, 1), pluck(sel.getAllRanges(), 'cursor'), "not inverted: " + print(sel.getAllRanges()));
-    // });
-
-    // test("setMark with multi cursors", function() {
-    //     initEditor('foo\nhello world\n123');
-    //     var positions = [{row: 0, column: 0},
-    //                      {row: 1, column: 0},
-    //                      {row: 1, column: 6}];
-    //     positions.forEach(function(p) { sel.addRange(Range.fromPoints(p,p)); });
-    //     editor.execCommand('setMark');
-    //     eq(positions, editor.session.$emacsMarkRing, print(editor.session.$emacsMarkRing));
-    // });
+    test("setMark with multi cursors", function() {
+        initEditor('foo\nhello world\n123');
+        setSelections([0, 4, 9]);
+        typeKey('Ctrl-Space');
+        typeKey('Right');
+        eq("0>1,4>5,9>10", getSelections());
+        typeKey('Ctrl-Space');
+        eq("1>1,5>5,10>10", getSelections());
+        typeKey('Left');
+        eq("0>0,4>4,9>9", getSelections());
+    });
 
     test("killLine", function() {
         initEditor("foo  \n Hello world\n  \n  123");
