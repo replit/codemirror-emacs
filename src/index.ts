@@ -1,6 +1,6 @@
 import { BlockCursorPlugin, hideNativeSelection } from "./block-cursor"
 import { StateField, StateEffect, ChangeDesc, EditorSelection, Extension, MapMode } from "@codemirror/state"
-import { showPanel, EditorView, ViewPlugin, PluginValue, ViewUpdate, keymap } from "@codemirror/view"
+import { showPanel, EditorView, ViewPlugin, PluginValue, ViewUpdate } from "@codemirror/view"
 import * as commands from "@codemirror/commands"
 import { startCompletion, completionStatus } from "@codemirror/autocomplete"
 import { openSearchPanel } from "@codemirror/search"
@@ -30,7 +30,7 @@ const emacsPlugin = ViewPlugin.fromClass(class implements PluginValue {
     this.view = view
     this.em = new EmacsHandler(view);
 
-    this.blockCursor = new BlockCursorPlugin(view)
+    this.blockCursor = new BlockCursorPlugin(view, this.em)
     this.view.scrollDOM.classList.add("cm-emacsMode")
 
     /*this.em.on("dialog", () => {
@@ -67,6 +67,7 @@ const emacsPlugin = ViewPlugin.fromClass(class implements PluginValue {
   eventHandlers: {
     keydown: function (e: KeyboardEvent, view: EditorView) {
       var result = this.em.handleKeyboard(e)
+      if (result) this.blockCursor.scheduleRedraw();
       return !!result;
     },
     mousedown: function() {
@@ -117,7 +118,7 @@ var specialKey: Record<string, string> = {
 var ignoredKeys: any = { Shift: 1, Alt: 1, Command: 1, Control: 1, CapsLock: 1 };
 
 const commandKeyBinding: Record<string, any> = {}
-class EmacsHandler {
+export class EmacsHandler {
   static bindKey(keyGroup: string, command: any) {
     keyGroup.split("|").forEach(function (binding) {
       let chain = "";
