@@ -1,8 +1,8 @@
 import { BlockCursorPlugin, hideNativeSelection } from "./block-cursor"
 import { StateField, StateEffect, ChangeDesc, EditorSelection, Extension, MapMode } from "@codemirror/state"
-import { showPanel, EditorView, ViewPlugin, PluginValue, ViewUpdate, keymap } from "@codemirror/view"
+import { showPanel, EditorView, ViewPlugin, PluginValue, ViewUpdate } from "@codemirror/view"
 import * as commands from "@codemirror/commands"
-import { startCompletion } from "@codemirror/autocomplete"
+import { startCompletion, completionStatus } from "@codemirror/autocomplete"
 import { openSearchPanel } from "@codemirror/search"
 
 const emacsStyle = EditorView.theme({
@@ -22,7 +22,7 @@ const emacsStyle = EditorView.theme({
 }) 
 
 const emacsPlugin = ViewPlugin.fromClass(class implements PluginValue {
-   public view: EditorView;
+  public view: EditorView;
   public status = ""
   public em: EmacsHandler
   blockCursor: BlockCursorPlugin
@@ -30,7 +30,7 @@ const emacsPlugin = ViewPlugin.fromClass(class implements PluginValue {
     this.view = view
     this.em = new EmacsHandler(view);
 
-    this.blockCursor = new BlockCursorPlugin(view)
+    this.blockCursor = new BlockCursorPlugin(view, this.em)
     this.view.scrollDOM.classList.add("cm-emacsMode")
 
     /*this.em.on("dialog", () => {
@@ -65,19 +65,15 @@ const emacsPlugin = ViewPlugin.fromClass(class implements PluginValue {
   }
 }, {
   eventHandlers: {
+    keydown: function (e: KeyboardEvent, view: EditorView) {
+      var result = this.em.handleKeyboard(e)
+      if (result) this.blockCursor.scheduleRedraw();
+      return !!result;
+    },
     mousedown: function() {
       this.em.$emacsMark = null
     }
   },
-  provide: plugin => {
-    return keymap.of([
-      {
-        any: function(view, e) {
-          return !!view.plugin(plugin)?.em.handleKeyboard(e)
-        }
-      }
-    ])
-  }
 })
 
 
@@ -122,7 +118,7 @@ var specialKey: Record<string, string> = {
 var ignoredKeys: any = { Shift: 1, Alt: 1, Command: 1, Control: 1, CapsLock: 1 };
 
 const commandKeyBinding: Record<string, any> = {}
-class EmacsHandler {
+export class EmacsHandler {
   static bindKey(keyGroup: string, command: any) {
     keyGroup.split("|").forEach(function (binding) {
       let chain = "";
@@ -176,6 +172,7 @@ class EmacsHandler {
   }
   static execCommand(command: any, handler: EmacsHandler, args: any, count: number = 1) {
     var commandResult = undefined;
+    if (count < 0) count = -count;
     if (typeof command === "function") {
       for (var i = 0; i < count; i++) command(handler.view);
     } else if (command === "null") {
@@ -197,6 +194,10 @@ class EmacsHandler {
   handleKeyboard(e: KeyboardEvent) {
     var keyData = EmacsHandler.getKey(e)
     var result = this.findCommand(keyData)
+
+    if (/Up|Down/.test(keyData?.[0]) && completionStatus(this.view.state))
+      return;
+
     if (result && result.command) {
       var commandResult = EmacsHandler.execCommand(result.command, this, result.args, result.count)
       if (commandResult === false)
@@ -335,9 +336,9 @@ class EmacsHandler {
   pushEmacsMark(p?: EmacsMark, activate?: boolean) {
     var prevMark = this.$emacsMark;
     if (prevMark)
-      this.$emacsMarkRing.push(prevMark);
+      pushUnique(this.$emacsMarkRing, prevMark);
     if (!p || activate) this.setEmacsMark(p);
-    else this.$emacsMarkRing.push(p);
+    else pushUnique(this.$emacsMarkRing, p);
   };
 
   popEmacsMark() {
@@ -391,6 +392,16 @@ class EmacsHandler {
     })
     view.dispatch(specs)
   }
+  selectionToEmacsMark() {
+    var selection = this.view.state.selection;
+    return selection.ranges.map(x => x.head)
+  }
+}
+
+function pushUnique<T>(array: T[], item:T) {
+  if (array.length && array[array.length - 1] + "" == item + "")
+    return;
+  array.push(item);
 }
 
 export const emacsKeys: Record<string, any> = {
@@ -618,6 +629,7 @@ EmacsHandler.addCommands({
       // in multi select mode, ea selection is handled individually
 
       if (args && args.count) {
+        var newMark = handler.selectionToEmacsMark();
         var mark = handler.popEmacsMark();
         if (mark) {
           var newRanges = mark.map((p: number)=> {
@@ -626,12 +638,13 @@ EmacsHandler.addCommands({
           view.dispatch({
             selection: EditorSelection.create(newRanges)
           })
+          handler.$emacsMarkRing.unshift(newMark);
         }
         return;
       }
 
       var mark = handler.emacsMark();
-      var rangePositions = ranges.map(function (r) { return r.from; });
+      var rangePositions = ranges.map(function (r) { return r.head; });
       var transientMarkModeActive = true;
       var hasNoSelection = ranges.every(function (range) { return range.from == range.to; });
       // if transientMarkModeActive then mark behavior is a little
@@ -655,7 +668,7 @@ EmacsHandler.addCommands({
     handlesCount: true
   },
   exchangePointAndMark: {
-    exec: function exchangePointAndMark$exec(handler: EmacsHandler, args: any) {
+    exec: function(handler: EmacsHandler, args: any) {
       var view = handler.view;
       var selection = view.state.selection;
       var isEmpty = !selection.ranges.some(r => r.from != r.to)
@@ -674,6 +687,8 @@ EmacsHandler.addCommands({
       if (!lastMark) return;
 
       if (args.count) { // replace mark and point
+        markRing[markRing.length - 1] = handler.selectionToEmacsMark()
+
         handler.clearSelection();
         
         var newRanges = lastMark.map(x => {
@@ -682,7 +697,6 @@ EmacsHandler.addCommands({
         view.dispatch({
           selection: EditorSelection.create(newRanges, selection.mainIndex)
         })
-
       } else { // create selection to last mark
         var n = Math.min(lastMark.length, selection.ranges.length)
         newRanges = []
@@ -723,22 +737,21 @@ EmacsHandler.addCommands({
       handler.pushEmacsMark(null);
       // don't delete the selection if it's before the cursor
       handler.clearSelection();
-      commands.selectLineEnd(handler.view);
-
       var view = handler.view;
       var state = view.state
 
-
       var text: string[] = [];
-      var changes = handler.view.state.selection.ranges.map(function(range) {
-        var from = range.from;
-        var to = range.to;
+      var changes = state.selection.ranges.map(function(range) {
+        var from = range.head;
+        var lineObject = state.doc.lineAt(from)
+
+        var to = lineObject.to;
         var line = state.sliceDoc(from, to)
 
         // remove EOL if only whitespace remains after the cursor
-        if (/^\s*$/.test(line)) {
+        if (/^\s*$/.test(line) && to < state.doc.length - 1) {
           to += 1;
-          text.push("\n")
+          text.push(line + "\n")
         } else {
           text.push(line)
         }

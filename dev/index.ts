@@ -7,7 +7,7 @@ import { emacs } from "../src/index"
 import * as commands from "@codemirror/commands";
 (window as any)._commands = commands
 
-const doc = `
+const doc = `//	🌞 אבג
 import { basicSetup, EditorView } from 'codemirror';
 import { javascript } from '@codemirror/lang-javascript';
 import { emacs } from "../src/"
