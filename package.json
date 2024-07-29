@@ -1,6 +1,6 @@
 {
   "name": "@replit/codemirror-emacs",
-  "version": "6.0.1",
+  "version": "6.1.0",
   "description": "Emacs keybindings for CodeMirror 6",
   "scripts": {
     "dev": "vite ./dev",
